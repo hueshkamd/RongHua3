@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>放大定格 -> 显字 -> 擦除 -> 覆盖图片 -> 视频背景</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f0e6d2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      position: relative;
+      width: 640px;
+      height: 1030px;
+      border: 1px solid #ddd;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .element {
+      position: absolute;
+      object-fit: contain;
+    }
+    .layer1 {/* 第一层图 */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      width: 100%;
+      opacity: 1;
+      transform-origin:63% 21.5%;
+      transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .text-layer {/* 文字 */
+      top: 10%;
+      left: 47%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    .wipe-area {/* 擦除区域*/
+      position: absolute;
+      top: 25%;
+      right: 20%;
+      width: 50%;
+      height: 40%;
+      z-index: 1000; /* 确保在最上层 */
+      cursor: crosshair; /*变成十字形*/
+      display: none; /* 初始状态为隐藏 */
+      touch-action: none; /* 禁用默认触摸行为 */
+    }
+    .final-overlay {/* 覆盖图 */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    /* 视频背景样式 */
+    .video-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+    /* 后续图片样式 */
+    .fade-image {
+      position: absolute;
+      top: 75%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 90%;
+      max-height: 80%;
+      z-index: 201;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+    }
+	.qicheng {
+	  position: absolute;
+	  top: 94%;
+	  left: 80%;
+	  transform: translate(-50%, -50%);
+	  width: 22%;
+	  z-index: 201;
+	  opacity: 0;
+	  transition: opacity 1s ease-in-out;
+	}
+    /* 图片三缩放动画 */
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+    .pulse-animation {
+      animation: pulse 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="rh3/点击光圈后.png" class="element layer1" id="backgroundImage" alt="图层1">
+    <img src="rh3/字.png" class="element text-layer" id="textLayer" alt="字">
+    <div class="wipe-area" id="wipeArea"></div>
+    <img src="rh3/擦除完.jpg" class="final-overlay" id="finalOverlay" alt="擦除完成">
+    <video class="video-background" id="videoBackground" preload="none" muted>
+      <source src="rh3/ca22611b8fac465ddb655ac1782d531e_raw.mp4" type="video/mp4">
+    </video>
+    <img src="rh3/1049912e592100ff409228f85c496fc0.png" class="fade-image" id="fadeImage1" alt="图片一">
+    <img src="rh3/ec2a38131b5248be8b60c5381eb73aad.png" class="fade-image" id="fadeImage2" alt="图片二">
+    <img src="rh3/df82cceba15824d3ecdf4ed3b8d8f927.png" class="qicheng" id="fadeImage3" alt="图片三">
+  </div>
+
+  <script> /* 获取元素 */
+    const backgroundImage = document.getElementById('backgroundImage');
+    const textLayer = document.getElementById('textLayer');
+    const wipeArea = document.getElementById('wipeArea');
+    const finalOverlay = document.getElementById('finalOverlay');
+    const videoBackground = document.getElementById('videoBackground');
+    const fadeImage1 = document.getElementById('fadeImage1');
+    const fadeImage2 = document.getElementById('fadeImage2');
+    const fadeImage3 = document.getElementById('fadeImage3');
+
+    let wipeCount = 0;/* 擦除判定 */
+    const wipeThreshold = 60;
+    let isWiping = false;
+    let hasTriggered = false;
+
+    window.addEventListener('load', function() {
+      setTimeout(() => {
+        backgroundImage.style.transform = 'translate(-50%, -50%) scale(2.75)';/* 背景放大 */
+        
+        setTimeout(() => {
+          textLayer.style.opacity = '1';/* 文字显示 */
+         
+          wipeArea.style.display = 'block';/* 拆除部分显示 */
+        }, 2000);
+      }, 100);
+    });
+
+    // 桌面端鼠标擦除
+    wipeArea.addEventListener('mousedown', (e) => {
+      if (e.button === 0) {
+        isWiping = true;
+        wipeCount = 0;
+      }
+    });
+
+    wipeArea.addEventListener('mousemove', () => {
+      if (isWiping && !hasTriggered) {
+        wipeCount++;
+        if (wipeCount >= wipeThreshold) {
+          showFinalOverlay();
+          hasTriggered = true;
+        }
+      }
+    });
+
+    // 移动端触摸擦除
+    wipeArea.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // 阻止默认行为
+      isWiping = true;
+      wipeCount = 0;
+    }, { passive: false });
+
+    wipeArea.addEventListener('touchmove', (e) => {
+      e.preventDefault(); // 阻止默认行为
+      if (isWiping && !hasTriggered) {
+        wipeCount++;
+        if (wipeCount >= wipeThreshold) {
+          showFinalOverlay();
+          hasTriggered = true;
+        }
+      }
+    }, { passive: false });
+
+    function stopWiping() {
+      isWiping = false;
+    }
+
+    // 结束擦除的事件监听
+    wipeArea.addEventListener('mouseup', stopWiping);
+    wipeArea.addEventListener('mouseleave', stopWiping);
+    wipeArea.addEventListener('touchend', stopWiping);
+    wipeArea.addEventListener('touchcancel', stopWiping);
+
+    function showFinalOverlay() {
+      setTimeout(() => {
+        finalOverlay.style.opacity = '1';
+        wipeArea.style.display = 'none';
+        
+        // 延迟后显示视频背景和后续图片
+        setTimeout(() => {
+          showVideoAndImages();
+        }, 1000); // 覆盖图显示1.5秒后开始视频动画
+      }, 300);
+    }
+
+    // 显示视频和后续图片的函数
+    function showVideoAndImages() {
+      // 先加载视频然后播放
+      videoBackground.load(); // 重新加载视频确保从头播放
+      videoBackground.style.opacity = '1';
+      
+      // 等待视频准备好后播放
+      videoBackground.addEventListener('canplaythrough', function() {
+        videoBackground.play();
+      }, { once: true });
+      
+      // 监听视频播放结束事件
+      videoBackground.addEventListener('ended', function() {
+        console.log('视频播放结束');
+        // 视频播放结束后保持最后一帧
+      });
+      
+      // 延迟显示图片一（视频播放1秒后）
+      setTimeout(() => {
+        fadeImage1.style.opacity = '1';
+        
+        // 延迟显示图片二（图片一显示1.5秒后）
+        setTimeout(() => {
+          fadeImage2.style.opacity = '1';
+          
+          // 延迟显示图片三（图片二显示1.5秒后）
+          setTimeout(() => {
+            fadeImage3.style.opacity = '1';
+            // 添加缩放动画
+            fadeImage3.classList.add('pulse-animation');
+          }, 1500);
+        }, 1500);
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

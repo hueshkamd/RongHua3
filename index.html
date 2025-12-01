@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图层叠加展示</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f0e6d2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      transition: opacity 1s ease; /* 过渡效果 */
+    }
+    
+    /* 页面淡出动画类 */
+    body.fade-out {
+      opacity: 0;
+    }
+
+    .container {
+      position: relative;
+      width: 640px;
+      height: 1030px;
+      border: 1px solid #ddd;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    /* 渐显动画 */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* 呼吸动画 */
+    @keyframes breathe {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
+
+    /* 通用元素样式 */
+    .element {
+      position: absolute;
+      animation: fadeIn 3s ease forwards;
+      opacity: 0;
+      object-fit: contain;
+    }
+    
+    /* 第一层：最底层图片 (z-index: 1) */
+    .layer1 {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      animation-delay: 0.2s;
+      z-index: 1;
+    }
+    
+    /* 光圈 */
+    .layer2 {
+      top: 28%;
+      right: 34%;
+      width: 12%;
+      /* 动画 */
+      animation: fadeIn 3s ease forwards, breathe 3s infinite ease-in-out;
+      animation-delay: 0.2s;
+      z-index: 3;
+    }
+    
+    /* 透明层 */
+    .layer3 {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      animation-delay: 0.2s;
+      z-index: 2;
+      opacity: 0.7;
+    }
+    
+    /* 手指 */
+    .layer4 {
+      bottom: 60%;
+      right: 45%;
+      width: 12%;
+      animation-delay: 0.2s;
+      z-index: 3;
+    }
+    
+    /* 点击区域 */
+    .click-area {
+      position: absolute;
+      top: 28%;
+      right: 38%;
+      width: 12%;
+      height: 12%;
+      z-index: 10;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 第一层：最底层 -->
+    <img src="rh3/点击光圈后.png" class="element layer1" alt="图层1">
+    <!-- 光圈 -->
+    <img src="rh3/光圈.png" class="element layer2" alt="图层2">
+    <!-- 第三层：透明 -->
+    <img src="rh3/透明.png" class="element layer3" alt="图层3">
+    <!-- 手指 -->
+    <img src="rh3/手指.png" class="element layer4" alt="图层4">
+    
+    <!-- 修改：为跳转链接添加ID并移除href -->
+    <a id="smoothTransition" class="click-area"></a>
+  </div>
+  <script>
+    document.getElementById('smoothTransition').addEventListener('click', function() {
+      document.body.classList.add('fade-out'); // 淡出动画
+      setTimeout(function() {
+        window.location.href = '黑色消失.html'; // 动画结束后跳转
+      }, 1000);
+    });
+  </script>
+
+</body>
+</html>
